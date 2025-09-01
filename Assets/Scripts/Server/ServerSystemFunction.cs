@@ -17,6 +17,7 @@ public class ServerSystemFunction
             return;
         }
         serverDataRepo.m_Driver.Listen();
+        Debug.Log("serverIsListening");
     }
     public static void Update(ServerDataRepo serverDataRepo)
     {

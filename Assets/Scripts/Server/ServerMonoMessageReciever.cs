@@ -12,7 +12,7 @@ public class ServerMonoMessageReciever : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        ServerSystemFunction.Update(ServerDataRepo);
     }
     private void OnDestroy()
     {
