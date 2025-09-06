@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 using Unity.Networking.Transport;
 using UnityEngine;
 
-public class GameplayState : IState
+public class CTGameplayState : IState
 {
     private NetworkDriver m_Driver;
     private NetworkConnection m_Connection;

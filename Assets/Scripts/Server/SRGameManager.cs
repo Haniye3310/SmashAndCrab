@@ -1,9 +1,9 @@
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class SRGameManager : MonoBehaviour
 {
-    public StateMachine MainStateMachine { get; private set; };
-    public static GameManager Instance { get; private set; }
+    public StateMachine MainStateMachine { get; private set; }
+    public static SRGameManager Instance { get; private set; }
     private void Awake()
     {
         DontDestroyOnLoad(this.gameObject);
@@ -12,7 +12,7 @@ public class GameManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        MainStateMachine = new StateMachine(new InitState());
+        MainStateMachine = new StateMachine(new SRInitState());
         MainStateMachine.OnStart();
     }
 
