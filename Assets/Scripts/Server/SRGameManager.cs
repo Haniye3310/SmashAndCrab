@@ -21,4 +21,8 @@ public class SRGameManager : MonoBehaviour
     {
         MainStateMachine.OnUpdate();
     }
+    private void OnDestroy()
+    {
+        MainStateMachine.OnFinished();
+    }
 }

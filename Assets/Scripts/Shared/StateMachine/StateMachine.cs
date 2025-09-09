@@ -38,5 +38,8 @@ public class StateMachine : IStateMachine
         _initialized = true;
     }
 
-    public void OnFinished() { }
+    public void OnFinished()
+    {
+        CurrentState.OnExit();
+    }
 }

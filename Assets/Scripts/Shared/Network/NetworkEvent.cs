@@ -10,8 +10,4 @@ public enum ServerEvent
     SendID,
     SendPos,
     SendAllIdsToAllConnections,
-    SendGeneratorPos,
-    SendItem,
-    SendRemovedItem,
-    SendCollectedItem
 }

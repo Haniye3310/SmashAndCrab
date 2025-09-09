@@ -14,7 +14,7 @@ public class SRGameplayState : IState
     private NativeList<SRConnectionData> _connections;
     private List<SRPlayerData> _players = new List<SRPlayerData>();
     float _timerCounter;
-    private float _dataSyncingInterval;
+    private float _dataSyncingInterval=0.05f;
     public UniTask OnEnter(object arg)
     {
         _timerCounter = Time.time;
@@ -56,6 +56,7 @@ public class SRGameplayState : IState
             var go = GameObject.Instantiate(_sceneData.SRAssetData.PlayerPrefab, new Vector3(0f, 2, 0f), Quaternion.identity);
             _players.Add(new SRPlayerData() { Player = go, ID = _idCounter });
             SendID(_connections[_connections.Length - 1]);
+            SendAllIDsToAllConnections();
             _idCounter++;
         }
         for (int i = 0; i < _connections.Length; i++)
@@ -130,13 +131,13 @@ public class SRGameplayState : IState
     }
     void SendID(SRConnectionData connectionData)
     {
-        byte[] @event = BitConverter.GetBytes((int)ServerEvent.SendID);
+        byte[] @event = BitConverter.GetBytes((Int16)ServerEvent.SendID);
         byte[] IDBytes = BitConverter.GetBytes(connectionData.ID);
 
 
         _driver.BeginSend(NetworkPipeline.Null, connectionData.NetworkConnection, out var writer);
 
-        byte[] sentBytes = new byte[8];
+        byte[] sentBytes = new byte[6];
 
         Buffer.BlockCopy(@event, 0, sentBytes, 0, 2);
         Buffer.BlockCopy(IDBytes, 0, sentBytes, 2, 4);
@@ -144,6 +145,30 @@ public class SRGameplayState : IState
 
         writer.WriteBytes(sentBytes);
         _driver.EndSend(writer);
+    }
+    void SendAllIDsToAllConnections()
+    {
+        byte[] @event = BitConverter.GetBytes((int)ServerEvent.SendAllIdsToAllConnections);
+        byte[] numberOfIDs = BitConverter.GetBytes(_connections.Length);
+
+
+        byte[] sentBytes = new byte[6 + _connections.Length * 4];
+
+        Buffer.BlockCopy(@event, 0, sentBytes, 0, 2);
+        Buffer.BlockCopy(numberOfIDs, 0, sentBytes, 2, 4);
+
+        for (int i = 0; i < _connections.Length; i++)
+        {
+            byte[] idByte = BitConverter.GetBytes(_connections[i].ID);
+            Buffer.BlockCopy(idByte, 0, sentBytes, 6 + (i * 4), 4);
+        }
+        for (int i = 0; i < _connections.Length; i++)
+        {
+            _driver.BeginSend(NetworkPipeline.Null, _connections[i].NetworkConnection, out var writer);
+            writer.WriteBytes(sentBytes);
+            _driver.EndSend(writer);
+        }
+
     }
     void MoveCharacters()
     {

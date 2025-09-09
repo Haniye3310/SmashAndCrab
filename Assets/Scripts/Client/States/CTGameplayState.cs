@@ -11,7 +11,7 @@ public class CTGameplayState : IState
     CTSceneData _sceneData;
     int _id;
     List<CTPlayer> _players = new List<CTPlayer>();
-    private float _dataSyncingInterval;
+    private float _dataSyncingInterval = 0.05f;
     float _timerCounter;
 
     public UniTask OnEnter(object arg)
@@ -52,6 +52,10 @@ public class CTGameplayState : IState
                 byte[] eventByte = new byte[2];
                 Buffer.BlockCopy(inData,0, eventByte, 0, 2);
                 Int16 @event = BitConverter.ToInt16(eventByte);
+                if ((ServerEvent)@event == ServerEvent.SendAllIdsToAllConnections)
+                {
+                    RecieveAllIDsOfAllConnections(inData);
+                }
                 if ((ServerEvent)@event == ServerEvent.SendID)
                 {
                     RecieveIDAndInstantiate(inData);
@@ -61,16 +65,17 @@ public class CTGameplayState : IState
                     RecievePosition(inData);
                 }
             }
-            if (_timerCounter + _dataSyncingInterval < Time.time)
-            {
-                SendInputAndID();
-                _timerCounter = Time.time;
-            }
+            
             else if (cmd == NetworkEvent.Type.Disconnect)
             {
                 Debug.Log("Client got disconnected from server.");
                 _connection = default;
             }
+        }
+        if (_timerCounter + _dataSyncingInterval < Time.time)
+        {
+            SendInputAndID();
+            _timerCounter = Time.time;
         }
     }
 
@@ -92,7 +97,6 @@ public class CTGameplayState : IState
         byte[] idByte = BitConverter.GetBytes(_id);
 
         _driver.BeginSend(_connection, out var writer);
-
         Buffer.BlockCopy(evBytes, 0, sentBytes, 0, 2);
         Buffer.BlockCopy(moveHorizontalBytes, 0, sentBytes, 2, 4);
         Buffer.BlockCopy(moveVerticalBytes, 0, sentBytes, 6, 4);
@@ -110,6 +114,35 @@ public class CTGameplayState : IState
         _id = BitConverter.ToInt32(IDByte);
         var go = GameObject.Instantiate(_sceneData.AssetData.PlayerPrefab);
         _players.Add(new CTPlayer { ID = _id, Player = go });
+    }
+    void RecieveAllIDsOfAllConnections(byte[] inData)
+    {
+        byte[] numberOfIDsByte = new byte[4];
+        Buffer.BlockCopy(inData, 2, numberOfIDsByte, 0, 4);
+        int numberOFIds = BitConverter.ToInt32(numberOfIDsByte);
+
+
+        for (int i = 0; i < numberOFIds; i++)
+        {
+            byte[] idByte = new byte[4];
+            Buffer.BlockCopy(inData, 6 + (i * 4), idByte, 0, 4);
+            int id = BitConverter.ToInt32(idByte);
+            bool isIdExistInList = false;
+            foreach ( CTPlayer p in _players)
+            {
+                if (p.ID == id)
+                {
+                    isIdExistInList = true;
+                    break;
+                }
+            }
+            if (!isIdExistInList)
+            {
+                var go = GameObject.Instantiate(_sceneData.AssetData.PlayerPrefab);
+                _players.Add(new CTPlayer { ID = id, Player = go });
+            }
+        }
+
     }
     void RecievePosition(byte[] inData)
     {
@@ -150,7 +183,6 @@ public class CTGameplayState : IState
 
             }
 
-            p.Player.GetComponent<Animator>().SetFloat("MoveSpeed", p.MovementDirection.magnitude * 10);
         }
     }
 }

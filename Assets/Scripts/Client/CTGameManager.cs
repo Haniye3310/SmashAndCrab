@@ -21,4 +21,8 @@ public class CTGameManager : MonoBehaviour
     {
         MainStateMachine.OnUpdate();
     }
+    private void OnDestroy()
+    {
+        MainStateMachine.OnFinished();
+    }
 }
